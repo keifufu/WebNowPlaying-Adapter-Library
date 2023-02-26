@@ -1,6 +1,8 @@
 # WebNowPlaying-Redux Adapter Library
 A C# library to communicate with the [WebNowPlaying-Redux](https://github.com/keifufu/WebNowPlaying-Redux) extension.
 
+Refer to [this](https://github.com/keifufu/WebNowPlaying-Redux/blob/main/CreatingAdapters.md) if you want to create or submit your own adapter.
+
 ## Usage
 ```C#
 using System.Threading;
