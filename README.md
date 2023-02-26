@@ -55,9 +55,9 @@ Name | Default | Description
 `DurationSeconds` | 0 | Duration in seconds
 `Position` | "0:00" | Position in (hh):mm:ss (Hours are optional)
 `PositionSeconds` | 0 | Position in seconds
-`PositionPercent` | 0 | Position in percent
+`PositionPercent` | 0.0 | Position in percent
 `Volume` | 100 | Volume from 1-100
-`Rating` | 0 | Rating from 0-5, thumbs up = 5, thumbs down = 1
+`Rating` | 0 | Rating from 0-5; Thumbs Up = 5; Thumbs Down = 1; Unrated = 0;
 `RepeatState` | NONE | Current repeat state (NONE, ONE, ALL)
 `Shuffle` | false | If shuffle is enabled
 
@@ -77,8 +77,8 @@ Name  | Description
 `RevertPositionPercent(double percent)` | Reverts the medias playback progress by x percent
 `ForwardPositionPercent(double percent)` | Forwards the medias playback progress by x percent
 `SetVolume(int volume)` | Set the medias volume from 1-100
-`ToggleRepeat()` | Toggles the medias repeat
-`ToggleShuffle()` | Toggles the medias shuffle state
+`ToggleRepeat()` | Toggles through repeat modes
+`ToggleShuffle()` | Toggles shuffle mode
 `ToggleThumbsUp()` | Toggles thumbs up or similar
 `ToggleThumbsDown()` | Toggles thumbs down or similar
-`SetRating(int rating)` | 0 = None; 1 = Thumbs Down; 5 = Thumbs Up
+`SetRating(int rating)` | Sites with a binary rating system fall back to: 0 = None; 1 = Thumbs Down; 5 = Thumbs Up
