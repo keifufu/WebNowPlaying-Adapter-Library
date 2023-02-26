@@ -161,7 +161,7 @@ namespace WNPReduxAdapterLibrary {
     }
 
     public static void SendMessage(string message) {
-      if (ws == null) return;
+      if (ws == null || mediaInfo.WebSocketID.Length == 0) return;
       ws.WebSocketServices.TryGetServiceHost("/", out WebSocketServiceHost host);
       host.Sessions.SendTo(message, mediaInfo.WebSocketID);
     }
@@ -269,7 +269,7 @@ namespace WNPReduxAdapterLibrary {
           if (type != "POSITION" && currentMediaInfo.Title != "")
             UpdateMediaInfo();
         } catch (Exception e) {
-          Log(LogType.ERROR, "Error parsing data from WebNowPlaying companion");
+          Log(LogType.ERROR, "Error parsing data from WebNowPlaying Redux");
           Log(LogType.DEBUG, e.ToString());
         }
       }
@@ -278,11 +278,11 @@ namespace WNPReduxAdapterLibrary {
         base.OnOpen();
         clients++;
 
-        // TODO: version should be send by the adapter, and if its a official adapter the extension will display which adapter is out of date
-        // TODO: versionInfo is x.x.x.b but we only want the first 3 (x.x.x)
+        // This gets the final assembly it's built into, so we can send this from in here
         System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
         System.Diagnostics.FileVersionInfo fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
-        Sessions.Broadcast($"VERSION {fvi.FileVersion}");
+        // Update WNPRLIB_REVISION when we update something that might break communication compatibility
+        Sessions.Broadcast($"ADAPTER_VERSION {fvi.FileVersion};WNPRLIB_REVISION 1");
 
         mediaInfoDictionary.GetOrAdd(ID, new MediaInfo());
       }
