@@ -4,154 +4,59 @@ using System;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 using System.Linq;
-
-/*
- * TODO:
- * State: 0 for stopped, 1 for playing, and 2 for paused.
- * Status: 0 for inactive (player closed) and 1 for active (player open).
- */
+using System.Threading.Tasks;
 
 namespace WNPReduxAdapterLibrary {
-  public class MediaInfo {
-    private string _Title { get; set; }
-    private StateMode _State { get; set; }
-
-    public MediaInfo() {
-      _State = StateMode.STOPPED;
-      WebSocketID = "";
-      Player = "";
-      _Title = "";
-      Artist = "";
-      Album = "";
-      CoverUrl = "";
-      Duration = "0:00";
-      DurationSeconds = 0;
-      Position = "0:00";
-      PositionSeconds = 0;
-      PositionPercent = 0;
-      Volume = 100;
-      Rating = 0;
-      RepeatState = RepeatMode.NONE;
-      Shuffle = false;
-      Timestamp = 0;
-    }
-
-    public enum StateMode { STOPPED, PLAYING, PAUSED }
-    public enum RepeatMode { NONE, ONE, ALL }
-    public StateMode State {
-      get { return _State; }
-      set {
-        _State = value;
-        Timestamp = DateTime.Now.Ticks / (decimal)TimeSpan.TicksPerMillisecond;
-      }
-    }
-    public string WebSocketID { get; set; }
-    public string Player { get; set; }
-    public string Title {
-      get { return _Title; }
-      set {
-        _Title = value;
-        if (value != "") {
-          Timestamp = DateTime.Now.Ticks / (decimal)TimeSpan.TicksPerMillisecond;
-        } else {
-          Timestamp = 0;
-        }
-      }
-    }
-    public string Artist { get; set; }
-    public string Album { get; set; }
-    public string CoverUrl { get; set; }
-    public string Duration { get; set; }
-    public int DurationSeconds { get; set; }
-    public string Position { get; set; }
-    public int PositionSeconds { get; set; }
-    public double PositionPercent { get; set; }
-    public int Volume { get; set; }
-    public int Rating { get; set; }
-    public RepeatMode RepeatState { get; set; }
-    public bool Shuffle { get; set; }
-    public decimal Timestamp { get; set; }
-  }
-
-  public class MediaEvents {
-    private enum Events {
-      TOGGLE_PLAYING,
-      NEXT,
-      PREVIOUS,
-      SET_POSITION,
-      SET_VOLUME,
-      TOGGLE_REPEAT,
-      TOGGLE_SHUFFLE,
-      TOGGLE_THUMBS_UP,
-      TOGGLE_THUMBS_DOWN,
-      SET_RATING
-    }
-    public void TogglePlaying() { WNPRedux.SendMessage($"{Events.TOGGLE_PLAYING}"); }
-    public void Next() { WNPRedux.SendMessage($"{Events.NEXT}"); }
-    public void Previous() { WNPRedux.SendMessage($"{Events.PREVIOUS}"); }
-    public void SetPositionSeconds(int seconds) {
-      int positionInSeconds = seconds;
-      if (positionInSeconds < 0) positionInSeconds = 0;
-      if (positionInSeconds > WNPRedux.mediaInfo.DurationSeconds) positionInSeconds = WNPRedux.mediaInfo.DurationSeconds;
-      double positionInPercent = (double)positionInSeconds / WNPRedux.mediaInfo.DurationSeconds;
-
-      WNPRedux.SendMessage($"{Events.SET_POSITION} {positionInSeconds}:{positionInPercent}");
-    }
-    // Lots of wrappers for `setPositionSeconds`
-    public void RevertPositionSeconds(int seconds) {
-      SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds - seconds);
-    }
-    public void ForwardPositionSeconds(int seconds) {
-      SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds + seconds);
-    }
-    public void RevertPositionPercent(double percent) {
-      int seconds = (int)Math.Round(percent / 100 * WNPRedux.mediaInfo.DurationSeconds);
-      SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds - seconds);
-    }
-    public void ForwardPositionPercent(double percent) {
-      int seconds = (int)Math.Round(percent / 100 * WNPRedux.mediaInfo.DurationSeconds);
-      SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds + seconds);
-    }
-    public void SetPositionPercent(double percent) {
-      int seconds = (int)Math.Round(percent / 100 * WNPRedux.mediaInfo.DurationSeconds);
-      SetPositionSeconds(seconds);
-    }
-    // Volume is 0-100
-    public void SetVolume(int volume) {
-      int newVolume = volume;
-      if (volume < 0) newVolume = 0;
-      if (volume > 100) newVolume = 100;
-      WNPRedux.SendMessage($"{Events.SET_VOLUME} {newVolume}");
-    }
-    // You can't directly set a repeat state, but you can toggle through them
-    public void ToggleRepeat() { WNPRedux.SendMessage($"{Events.TOGGLE_REPEAT}"); }
-    public void ToggleShuffle() { WNPRedux.SendMessage($"{Events.TOGGLE_SHUFFLE}"); }
-    public void ToggleThumbsUp() { WNPRedux.SendMessage($"{Events.TOGGLE_THUMBS_UP}"); }
-    public void ToggleThumbsDown() { WNPRedux.SendMessage($"{Events.TOGGLE_THUMBS_DOWN}"); }
-    /* (0-5) (0 = no rating) (1-2 = thumbs down) (3-5 = thumbs up) */
-    public void SetRating(int rating) { WNPRedux.SendMessage($"{Events.SET_RATING} {rating}"); }
-  }
-
   public class WNPRedux {
-    // mediaInfo is what previously was 'displayedMusicInfo'
+    /// <summary>
+    /// Info about the currently playing media.
+    /// </summary>
     public static MediaInfo mediaInfo = new MediaInfo();
+    /// <summary>
+    /// Events to interact with currently playing media.
+    /// </summary>
     public static MediaEvents mediaEvents = new MediaEvents();
     private static WebSocketServer ws = null;
+    /// <summary>
+    /// Number of connected clients.
+    /// </summary>
     public static int clients = 0;
 
-    // Dictionary of media info, key is websocket client id
+    /// <summary>
+    /// Dictionary of all media info by all connected clients, keyed by the WebsocketID
+    /// </summary>
     private static readonly ConcurrentDictionary<string, MediaInfo>
         mediaInfoDictionary = new ConcurrentDictionary<string, MediaInfo>();
 
     public enum LogType { DEBUG, WARNING, ERROR };
-    public static Action<LogType, string> logger;
-    public static void Initialize(int port, Action<LogType, string> _logger) {
+    private static Action<LogType, string> _logger;
+    private static bool _throttleLogs = false;
+    private static string adapterVersion = "";
+    /// <summary>
+    /// Opens the WebSocket if it isn't already opened.
+    /// <returns>No return type</returns>
+    /// <example>
+    /// <code>
+    /// void Logger(WNPRedux.LogType type, string message) {
+    ///   Console.WriteLine($"{type}: {message}");
+    /// }
+    /// WNPRedux.Initialize(1234, logger);
+    /// </code>
+    /// </example>
+    /// <param name="port">WebSocket Port</param>
+    /// <param name="version">Adapter Version (major.minor.patch)</param>
+    /// <param name="logger">Custom logger</param>
+    /// <param name="throttleLogs">Prevent thes ame log message being logged more than once per 30 seconds</param>
+    /// </summary>
+    public static void Initialize(int port, string version, Action<LogType, string> logger, bool throttleLogs = false) {
       try {
         if (ws != null) return;
+        adapterVersion = version;
         ws = new WebSocketServer(port);
         ws.AddWebSocketService<WNPReduxWebSocket>("/");
         ws.Start();
-        logger = _logger;
+        _logger = logger;
+        _throttleLogs = throttleLogs;
         mediaInfo = new MediaInfo();
         mediaEvents = new MediaEvents();
       } catch (Exception e) {
@@ -160,12 +65,15 @@ namespace WNPReduxAdapterLibrary {
       }
     }
 
-    public static void SendMessage(string message) {
+    private static void SendMessage(string message) {
       if (ws == null || mediaInfo.WebSocketID.Length == 0) return;
       ws.WebSocketServices.TryGetServiceHost("/", out WebSocketServiceHost host);
       host.Sessions.SendTo(message, mediaInfo.WebSocketID);
     }
 
+    /// <summary>
+    /// Closes the WebSocket if it's opened.
+    /// </summary>
     public static void Close() {
       if (ws != null) {
         ws.Stop();
@@ -175,14 +83,36 @@ namespace WNPReduxAdapterLibrary {
       mediaEvents = new MediaEvents();
     }
 
+    private static readonly object _lock = new object();
+    private static readonly Dictionary<string, int> _logCounts = new Dictionary<string, int>();
+    private static readonly int _maxLogCount = 1;
+    private static readonly TimeSpan _logResetTime = TimeSpan.FromSeconds(30);
     private static void Log(LogType type, string message) {
-      logger(type, message);
-      // TODO: logging, don't allow repeated log spam
-      // TODO: log type is no longer a thing, since we don't use rainmeter
-      // logging (this is a library)
+      if (!_throttleLogs) {
+        _logger(type, message);
+        return;
+      }
+
+      lock (_lock) {
+        DateTime currentTime = DateTime.Now;
+        string typeMessage = $"{type} {message}";
+
+        if (!_logCounts.TryGetValue(typeMessage, out int logCount)) logCount = 0;
+
+        if (logCount < _maxLogCount) {
+          _logger(type, message);
+          _logCounts[typeMessage] = logCount + 1;
+          Task.Run(async () => {
+            await Task.Delay(_logResetTime);
+            lock (_lock) {
+              _logCounts.Remove(typeMessage);
+            }
+          });
+        }
+      }
     }
 
-    public static void UpdateMediaInfo() {
+    private static void UpdateMediaInfo() {
       try {
         var iterableDictionary = mediaInfoDictionary.OrderByDescending(key => key.Value.Timestamp);
         bool suitableMatch = false;
@@ -208,11 +138,184 @@ namespace WNPReduxAdapterLibrary {
       }
     }
 
-    public class WNPReduxWebSocket : WebSocketBehavior {
+    public class MediaInfo {
+      private string _Title { get; set; }
+      private StateMode _State { get; set; }
+
+      public MediaInfo() {
+        _State = StateMode.STOPPED;
+        WebSocketID = "";
+        Player = "";
+        _Title = "";
+        Artist = "";
+        Album = "";
+        CoverUrl = "";
+        Duration = "0:00";
+        DurationSeconds = 0;
+        Position = "0:00";
+        PositionSeconds = 0;
+        PositionPercent = 0;
+        Volume = 100;
+        Rating = 0;
+        RepeatState = RepeatMode.NONE;
+        Shuffle = false;
+        Timestamp = 0;
+      }
+
+      public enum StateMode { STOPPED, PLAYING, PAUSED }
+      public enum RepeatMode { NONE, ONE, ALL }
+      public StateMode State {
+        get { return _State; }
+        set {
+          _State = value;
+          Timestamp = DateTime.Now.Ticks / (decimal)TimeSpan.TicksPerMillisecond;
+        }
+      }
+      public string WebSocketID { get; set; }
+      public string Player { get; set; }
+      public string Title {
+        get { return _Title; }
+        set {
+          _Title = value;
+          if (value != "") {
+            Timestamp = DateTime.Now.Ticks / (decimal)TimeSpan.TicksPerMillisecond;
+          } else {
+            Timestamp = 0;
+          }
+        }
+      }
+      public string Artist { get; set; }
+      public string Album { get; set; }
+      public string CoverUrl { get; set; }
+      public string Duration { get; set; }
+      public int DurationSeconds { get; set; }
+      public string Position { get; set; }
+      public int PositionSeconds { get; set; }
+      public double PositionPercent { get; set; }
+      public int Volume { get; set; }
+      public int Rating { get; set; }
+      public RepeatMode RepeatState { get; set; }
+      public bool Shuffle { get; set; }
+      public decimal Timestamp { get; set; }
+    }
+
+    public class MediaEvents {
+      private enum Events {
+        TOGGLE_PLAYING,
+        NEXT,
+        PREVIOUS,
+        SET_POSITION,
+        SET_VOLUME,
+        TOGGLE_REPEAT,
+        TOGGLE_SHUFFLE,
+        TOGGLE_THUMBS_UP,
+        TOGGLE_THUMBS_DOWN,
+        SET_RATING
+      }
+      /// <summary>
+      /// Toggles the playing state of the current media.
+      /// </summary>
+      public void TogglePlaying() { SendMessage($"{Events.TOGGLE_PLAYING}"); }
+      /// <summary>
+      /// Skips to the next media/section if supported.
+      /// </summary>
+      public void Next() { SendMessage($"{Events.NEXT}"); }
+      /// <summary>
+      /// Skips to the previous media/section if supported.
+      /// </summary>
+      public void Previous() { SendMessage($"{Events.PREVIOUS}"); }
+      /// <summary>
+      /// Sets the current medias playback progress in seconds
+      /// </summary>
+      /// <param name="seconds"></param>.
+      public void SetPositionSeconds(int seconds) {
+        int positionInSeconds = seconds;
+        if (positionInSeconds < 0) positionInSeconds = 0;
+        if (positionInSeconds > WNPRedux.mediaInfo.DurationSeconds) positionInSeconds = WNPRedux.mediaInfo.DurationSeconds;
+        double positionInPercent = (double)positionInSeconds / WNPRedux.mediaInfo.DurationSeconds;
+
+        SendMessage($"{Events.SET_POSITION} {positionInSeconds}:{positionInPercent}");
+      }
+      /// <summary>
+      /// Reverts the current medias playback progress by x seconds
+      /// </summary>
+      /// <param name="seconds"></param>.
+      public void RevertPositionSeconds(int seconds) {
+        SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds - seconds);
+      }
+      /// <summary>
+      /// Forwards the current medias playback progress by x seconds
+      /// </summary>
+      /// <param name="seconds"></param>.
+      public void ForwardPositionSeconds(int seconds) {
+        SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds + seconds);
+      }
+      /// <summary>
+      /// Sets the current medias playback progress in percent.
+      /// </summary>
+      /// <param name="percent"></param>
+      public void SetPositionPercent(double percent) {
+        int seconds = (int)Math.Round(percent / 100 * WNPRedux.mediaInfo.DurationSeconds);
+        SetPositionSeconds(seconds);
+      }
+      /// <summary>
+      /// Reverts the current medias playback progress by x percent
+      /// </summary>
+      /// <param name="percent"></param>.
+      public void RevertPositionPercent(double percent) {
+        int seconds = (int)Math.Round(percent / 100 * WNPRedux.mediaInfo.DurationSeconds);
+        SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds - seconds);
+      }
+      /// <summary>
+      /// Forwards the current medias playback progress by x percent
+      /// </summary>
+      /// <param name="percent"></param>.
+      public void ForwardPositionPercent(double percent) {
+        int seconds = (int)Math.Round(percent / 100 * WNPRedux.mediaInfo.DurationSeconds);
+        SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds + seconds);
+      }
+      /// <summary>
+      /// Sets the current medias volume level
+      /// </summary>
+      /// <param name="volume">Number from 0-100</param>
+      public void SetVolume(int volume) {
+        int newVolume = volume;
+        if (volume < 0) newVolume = 0;
+        if (volume > 100) newVolume = 100;
+        SendMessage($"{Events.SET_VOLUME} {newVolume}");
+      }
+      /// <summary>
+      /// Toggles the current medias repeat state if supported.
+      /// </summary>
+      public void ToggleRepeat() { SendMessage($"{Events.TOGGLE_REPEAT}"); }
+      /// <summary>
+      /// Toggles the current medias shuffle state if supported.
+      /// </summary>
+      public void ToggleShuffle() { SendMessage($"{Events.TOGGLE_SHUFFLE}"); }
+      /// <summary>
+      /// Toggles thumbs up or similar on the current media if supported.
+      /// </summary>
+      public void ToggleThumbsUp() { SendMessage($"{Events.TOGGLE_THUMBS_UP}"); }
+      /// <summary>
+      /// Toggles thumbs down or similar on the current media if supported.
+      /// </summary>
+      public void ToggleThumbsDown() { SendMessage($"{Events.TOGGLE_THUMBS_DOWN}"); }
+      /// <summary>
+      /// Sets the rating from 0-5 on websites that support it.
+      /// Falls back to:
+      /// 0 = no rating
+      /// 1-2 = Thumbs Down
+      /// 3-5 = Thumbs Up
+      /// </summary>
+      /// <param name="rating">Number from 0-5</param>
+      public void SetRating(int rating) { SendMessage($"{Events.SET_RATING} {rating}"); }
+    }
+
+    private class WNPReduxWebSocket : WebSocketBehavior {
       private int ConvertTimeStringToSeconds(string time) {
         string[] durArr = time.Split(':');
 
-        // Duration will always have seconds and minutes
+        // Duration will always have seconds and minutes, but hours are optional
         int durSec = Convert.ToInt16(durArr[durArr.Length - 1]);
         int durMin = durArr.Length > 1 ? Convert.ToInt16(durArr[durArr.Length - 2]) * 60 : 0;
         int durHour = durArr.Length > 2 ? Convert.ToInt16(durArr[durArr.Length - 3]) * 60 * 60 : 0;
@@ -278,11 +381,10 @@ namespace WNPReduxAdapterLibrary {
         base.OnOpen();
         clients++;
 
-        // This gets the final assembly it's built into, so we can send this from in here
-        System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
-        System.Diagnostics.FileVersionInfo fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
-        // Update WNPRLIB_REVISION when we update something that might break communication compatibility
-        Sessions.Broadcast($"ADAPTER_VERSION {fvi.FileVersion};WNPRLIB_REVISION 1");
+        // This used to get the version from the final assembly, but who knows what authors might do there.
+        // We simply let them provide a version number on Initialization now.
+        // Update WNPRLIB_REVISION when we update something that might break communication compatibility.
+        Sessions.Broadcast($"ADAPTER_VERSION {adapterVersion};WNPRLIB_REVISION 1");
 
         mediaInfoDictionary.GetOrAdd(ID, new MediaInfo());
       }
@@ -291,7 +393,6 @@ namespace WNPReduxAdapterLibrary {
         base.OnClose(e);
         clients--;
 
-        // If removing the last index in the update list and there is one it download album art
         mediaInfoDictionary.TryRemove(ID, out MediaInfo temp);
         if (mediaInfo.WebSocketID == temp.WebSocketID)
           UpdateMediaInfo();
