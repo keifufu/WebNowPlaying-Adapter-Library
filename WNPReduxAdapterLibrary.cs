@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿#pragma warning disable 1591
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System;
 using WebSocketSharp;
@@ -43,11 +44,11 @@ namespace WNPReduxAdapterLibrary {
     /// WNPRedux.Initialize(1234, "1.0.0", logger);
     /// </code>
     /// </example>
+    /// </summary>
     /// <param name="port">WebSocket Port</param>
     /// <param name="version">Adapter Version (major.minor.patch)</param>
     /// <param name="logger">Custom logger</param>
     /// <param name="throttleLogs">Prevent the same log message being logged more than once per 30 seconds</param>
-    /// </summary>
     public static void Initialize(int port, string version, Action<LogType, string> logger, bool throttleLogs = false) {
       try {
         if (ws != null) return;
@@ -401,3 +402,5 @@ namespace WNPReduxAdapterLibrary {
     }
   }
 }
+
+#pragma warning restore 1591
