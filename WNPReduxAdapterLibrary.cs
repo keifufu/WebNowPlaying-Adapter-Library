@@ -5,7 +5,6 @@ using WebSocketSharp;
 using WebSocketSharp.Server;
 using System.Linq;
 using System.Threading.Tasks;
-using WNPReduxAdapterLibrary;
 
 namespace WNPReduxAdapterLibrary {
   public class WNPRedux {
