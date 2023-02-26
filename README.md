@@ -1,4 +1,4 @@
-# WebNowPlaying Adapter Library
+# WebNowPlaying-Redux Adapter Library
 A C# library to communicate with the [WebNowPlaying-Redux](https://github.com/keifufu/WebNowPlaying-Redux) extension.
 
 ## Usage
