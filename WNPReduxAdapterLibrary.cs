@@ -327,8 +327,8 @@ namespace WNPReduxAdapterLibrary {
 
       protected override void OnMessage(MessageEventArgs arg) {
         try {
-          string type = arg.Data.Substring(0, arg.Data.IndexOf(":")).ToUpper();
-          string info = arg.Data.Substring(arg.Data.IndexOf(":") + 1);
+          string type = arg.Data.Substring(0, arg.Data.IndexOf(" ")).ToUpper();
+          string info = arg.Data.Substring(arg.Data.IndexOf(" ") + 1);
 
           MediaInfo currentMediaInfo = new MediaInfo();
           if (!mediaInfoDictionary.TryGetValue(ID, out currentMediaInfo)) {
