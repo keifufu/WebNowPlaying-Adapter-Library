@@ -5,6 +5,7 @@ using WebSocketSharp;
 using WebSocketSharp.Server;
 using System.Linq;
 using System.Threading.Tasks;
+using WNPReduxAdapterLibrary;
 
 namespace WNPReduxAdapterLibrary {
   public class WNPRedux {
@@ -40,13 +41,13 @@ namespace WNPReduxAdapterLibrary {
     /// void Logger(WNPRedux.LogType type, string message) {
     ///   Console.WriteLine($"{type}: {message}");
     /// }
-    /// WNPRedux.Initialize(1234, logger);
+    /// WNPRedux.Initialize(1234, "1.0.0", logger);
     /// </code>
     /// </example>
     /// <param name="port">WebSocket Port</param>
     /// <param name="version">Adapter Version (major.minor.patch)</param>
     /// <param name="logger">Custom logger</param>
-    /// <param name="throttleLogs">Prevent thes ame log message being logged more than once per 30 seconds</param>
+    /// <param name="throttleLogs">Prevent the same log message being logged more than once per 30 seconds</param>
     /// </summary>
     public static void Initialize(int port, string version, Action<LogType, string> logger, bool throttleLogs = false) {
       try {
@@ -79,6 +80,7 @@ namespace WNPReduxAdapterLibrary {
         ws.Stop();
         ws = null;
       }
+      _throttleLogs = false;
       mediaInfo = new MediaInfo();
       mediaEvents = new MediaEvents();
     }
@@ -231,8 +233,8 @@ namespace WNPReduxAdapterLibrary {
       public void SetPositionSeconds(int seconds) {
         int positionInSeconds = seconds;
         if (positionInSeconds < 0) positionInSeconds = 0;
-        if (positionInSeconds > WNPRedux.mediaInfo.DurationSeconds) positionInSeconds = WNPRedux.mediaInfo.DurationSeconds;
-        double positionInPercent = (double)positionInSeconds / WNPRedux.mediaInfo.DurationSeconds;
+        if (positionInSeconds > mediaInfo.DurationSeconds) positionInSeconds = mediaInfo.DurationSeconds;
+        double positionInPercent = (double)positionInSeconds / mediaInfo.DurationSeconds;
 
         SendMessage($"{Events.SET_POSITION} {positionInSeconds}:{positionInPercent}");
       }
@@ -241,21 +243,21 @@ namespace WNPReduxAdapterLibrary {
       /// </summary>
       /// <param name="seconds"></param>.
       public void RevertPositionSeconds(int seconds) {
-        SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds - seconds);
+        SetPositionSeconds(mediaInfo.PositionSeconds - seconds);
       }
       /// <summary>
       /// Forwards the current medias playback progress by x seconds
       /// </summary>
       /// <param name="seconds"></param>.
       public void ForwardPositionSeconds(int seconds) {
-        SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds + seconds);
+        SetPositionSeconds(mediaInfo.PositionSeconds + seconds);
       }
       /// <summary>
       /// Sets the current medias playback progress in percent.
       /// </summary>
       /// <param name="percent"></param>
       public void SetPositionPercent(double percent) {
-        int seconds = (int)Math.Round(percent / 100 * WNPRedux.mediaInfo.DurationSeconds);
+        int seconds = (int)Math.Round(percent / 100 * mediaInfo.DurationSeconds);
         SetPositionSeconds(seconds);
       }
       /// <summary>
@@ -263,16 +265,16 @@ namespace WNPReduxAdapterLibrary {
       /// </summary>
       /// <param name="percent"></param>.
       public void RevertPositionPercent(double percent) {
-        int seconds = (int)Math.Round(percent / 100 * WNPRedux.mediaInfo.DurationSeconds);
-        SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds - seconds);
+        int seconds = (int)Math.Round(percent / 100 * mediaInfo.DurationSeconds);
+        SetPositionSeconds(mediaInfo.PositionSeconds - seconds);
       }
       /// <summary>
       /// Forwards the current medias playback progress by x percent
       /// </summary>
       /// <param name="percent"></param>.
       public void ForwardPositionPercent(double percent) {
-        int seconds = (int)Math.Round(percent / 100 * WNPRedux.mediaInfo.DurationSeconds);
-        SetPositionSeconds(WNPRedux.mediaInfo.PositionSeconds + seconds);
+        int seconds = (int)Math.Round(percent / 100 * mediaInfo.DurationSeconds);
+        SetPositionSeconds(mediaInfo.PositionSeconds + seconds);
       }
       /// <summary>
       /// Sets the current medias volume level
