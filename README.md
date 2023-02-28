@@ -3,6 +3,9 @@ A C# library to communicate with the [WebNowPlaying-Redux](https://github.com/ke
 
 Refer to [this](https://github.com/keifufu/WebNowPlaying-Redux/blob/main/CreatingAdapters.md) if you want to create or submit your own adapter.
 
+## Installing
+Available on [NuGet](https://www.nuget.org/packages/WNPRedux-Adapter-Library/) or as a dll in [Releases](https://github.com/keifufu/WNPRedux-Adapter-Library/releases)
+
 ## Usage
 ```C#
 using System.Threading;
