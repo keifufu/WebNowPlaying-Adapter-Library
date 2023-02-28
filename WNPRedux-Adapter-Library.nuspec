@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>keifufu</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <icon>icon.png</icon>
+    <projectUrl>https://github.com/keifufu/WNPRedux-Adapter-Library</projectUrl>
+    <description>$description$</description>
+    <releaseNotes>Initial Release.</releaseNotes>
+    <copyright>$copyright$</copyright>
+    <tags>webnowplaying-redux keifufu</tags>
+  </metadata>
+  <files>
+    <file src="icon.png" target="\" />
+  </files>
+</package>
