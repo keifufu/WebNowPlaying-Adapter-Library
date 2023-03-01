@@ -8,6 +8,7 @@ Available on [NuGet](https://www.nuget.org/packages/WNPRedux-Adapter-Library/) o
 
 ## Usage
 ```C#
+using System;
 using System.Threading;
 using WNPReduxAdapterLibrary;
 
@@ -23,7 +24,7 @@ void Main() {
   // Write the current title to the console and pause/unpause the video for 30 seconds
   for (int i = 0; i < 30; i++) {
     Console.WriteLine(WNPRedux.mediaInfo.Title);
-    WNPRedux.mediaEvents.togglePlaying();
+    WNPRedux.mediaEvents.TogglePlaying();
     Thread.Sleep(1000);
   }
 
