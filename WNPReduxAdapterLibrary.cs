@@ -53,13 +53,13 @@ namespace WNPReduxAdapterLibrary {
       try {
         if (ws != null) return;
         adapterVersion = version;
-        ws = new WebSocketServer(port);
-        ws.AddWebSocketService<WNPReduxWebSocket>("/");
-        ws.Start();
         _logger = logger;
         _throttleLogs = throttleLogs;
         mediaInfo = new MediaInfo();
         mediaEvents = new MediaEvents();
+        ws = new WebSocketServer(port);
+        ws.AddWebSocketService<WNPReduxWebSocket>("/");
+        ws.Start();
       } catch (Exception e) {
         Log(LogType.ERROR, "WNPRedux: Failed to start websocket");
         Log(LogType.DEBUG, $"WNPRedux Trace: {e}");
