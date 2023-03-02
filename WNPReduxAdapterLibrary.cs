@@ -135,8 +135,8 @@ namespace WNPReduxAdapterLibrary {
           mediaInfo = fallbackInfo;
         }
       } catch (Exception e) {
-        Log(LogType.ERROR, "Error finding new media info to display");
-        Log(LogType.DEBUG, e.ToString());
+        Log(LogType.ERROR, "WNPRedux: Error finding new media info to display");
+        Log(LogType.DEBUG, $"WNPRedux Trace: {e}");
       }
     }
 
@@ -367,14 +367,14 @@ namespace WNPReduxAdapterLibrary {
           else if (type == "RATING") currentMediaInfo.Rating = Convert.ToInt16(info);
           else if (type == "REPEAT") currentMediaInfo.RepeatState = (MediaInfo.RepeatMode)Enum.Parse(typeof(MediaInfo.RepeatMode), info);
           else if (type == "SHUFFLE") currentMediaInfo.Shuffle = Boolean.Parse(info);
-          else if (type == "ERROR") Log(LogType.ERROR, $"WNP Redux Error: {info}");
-          else if (type == "ERRORDEBUG") Log(LogType.DEBUG, $"WNP Redux Debug Error: {info}");
+          else if (type == "ERROR") Log(LogType.ERROR, $"WNPRedux: Error from browser extension: {info}");
+          else if (type == "ERRORDEBUG") Log(LogType.DEBUG, $"WNPRedux: Browser Error {info}");
           else Log(LogType.WARNING, $"Unknown message type: {type}");
 
           if (type != "POSITION" && currentMediaInfo.Title != "")
             UpdateMediaInfo();
         } catch (Exception e) {
-          Log(LogType.ERROR, "Error parsing data from WebNowPlaying Redux");
+          Log(LogType.ERROR, "WNPREdux: Error parsing data from WebNowPlaying Redux Browser Extension");
           Log(LogType.DEBUG, e.ToString());
         }
       }
