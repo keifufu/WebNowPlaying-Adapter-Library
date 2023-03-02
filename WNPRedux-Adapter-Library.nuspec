@@ -10,7 +10,7 @@
     <icon>icon.png</icon>
     <projectUrl>https://github.com/keifufu/WNPRedux-Adapter-Library</projectUrl>
     <description>$description$</description>
-    <releaseNotes>Initialize logger before starting websocket, fixes cryptic error messages when port is already in use or otherwise invalid.</releaseNotes>
+    <releaseNotes>Improve log messages.</releaseNotes>
     <copyright>$copyright$</copyright>
     <tags>webnowplaying-redux keifufu</tags>
   </metadata>
