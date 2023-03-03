@@ -381,7 +381,7 @@ namespace WNPReduxAdapterLibrary {
           if (type != "POSITION" && currentMediaInfo.Title != "")
             UpdateMediaInfo();
         } catch (Exception e) {
-          Log(LogType.ERROR, "WNPREdux: Error parsing data from WebNowPlaying Redux Browser Extension");
+          Log(LogType.ERROR, "WNPRedux: Error parsing data from WebNowPlaying Redux Browser Extension");
           Log(LogType.DEBUG, e.ToString());
         }
       }
