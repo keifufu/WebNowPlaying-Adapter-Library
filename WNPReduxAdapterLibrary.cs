@@ -143,6 +143,7 @@ namespace WNPReduxAdapterLibrary {
     public class MediaInfo {
       private string _Title { get; set; }
       private StateMode _State { get; set; }
+      private int _Volume { get; set; }
 
       public MediaInfo() {
         _State = StateMode.STOPPED;
@@ -194,7 +195,13 @@ namespace WNPReduxAdapterLibrary {
       public string Position { get; set; }
       public int PositionSeconds { get; set; }
       public double PositionPercent { get; set; }
-      public int Volume { get; set; }
+      public int Volume {
+        get { return _Volume; }
+        set {
+          _Volume = value;
+          Timestamp = DateTime.Now.Ticks / (decimal)TimeSpan.TicksPerMillisecond;
+        }
+      }
       public int Rating { get; set; }
       public RepeatMode RepeatState { get; set; }
       public bool Shuffle { get; set; }
