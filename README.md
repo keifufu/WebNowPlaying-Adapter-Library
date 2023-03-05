@@ -40,6 +40,10 @@ Opens the WebSocket if it isn't already opened.
 `version` has to be "x.x.x".  
 `throttleLogs` prevents the same log message being logged more than once per 30 seconds.
 
+### WNPRedux.Log(WNPRedux.LogType type, string message)
+Calls the `logger` provided in `WNPRedux.Initialize()`  
+Useful since it's throttled to one similar message per 30 seconds if `throttleLogs` is set to `true` in `WNPRedux.Initialize()`
+
 ### WNPRedux.Close()
 Closes the WebSocket if it's opened.
 
