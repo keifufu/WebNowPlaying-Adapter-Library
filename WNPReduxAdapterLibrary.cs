@@ -29,7 +29,7 @@ namespace WNPReduxAdapterLibrary {
     private static readonly ConcurrentDictionary<string, MediaInfo>
         mediaInfoDictionary = new ConcurrentDictionary<string, MediaInfo>();
 
-    public enum LogType { DEBUG, WARNING, ERROR };
+    public enum LogType { Debug, Warning, Error };
     private static Action<LogType, string> _logger;
     private static bool _throttleLogs = false;
     private static string adapterVersion = "";
@@ -61,8 +61,8 @@ namespace WNPReduxAdapterLibrary {
         ws.AddWebSocketService<WNPReduxWebSocket>("/");
         ws.Start();
       } catch (Exception e) {
-        Log(LogType.ERROR, "WNPRedux: Failed to start websocket");
-        Log(LogType.DEBUG, $"WNPRedux Trace: {e}");
+        Log(LogType.Error, "WNPRedux: Failed to start websocket");
+        Log(LogType.Debug, $"WNPRedux Trace: {e}");
       }
     }
 
@@ -89,7 +89,7 @@ namespace WNPReduxAdapterLibrary {
     private static readonly Dictionary<string, int> _logCounts = new Dictionary<string, int>();
     private static readonly int _maxLogCount = 1;
     private static readonly TimeSpan _logResetTime = TimeSpan.FromSeconds(30);
-    private static void Log(LogType type, string message) {
+    public static void Log(LogType type, string message) {
       if (!_throttleLogs) {
         _logger(type, message);
         return;
@@ -135,8 +135,8 @@ namespace WNPReduxAdapterLibrary {
           mediaInfo = fallbackInfo;
         }
       } catch (Exception e) {
-        Log(LogType.ERROR, "WNPRedux: Error finding new media info to display");
-        Log(LogType.DEBUG, $"WNPRedux Trace: {e}");
+        Log(LogType.Error, "WNPRedux: Error finding new media info to display");
+        Log(LogType.Debug, $"WNPRedux Trace: {e}");
       }
     }
 
@@ -374,15 +374,15 @@ namespace WNPReduxAdapterLibrary {
           else if (type == "RATING") currentMediaInfo.Rating = Convert.ToInt16(info);
           else if (type == "REPEAT") currentMediaInfo.RepeatState = (MediaInfo.RepeatMode)Enum.Parse(typeof(MediaInfo.RepeatMode), info);
           else if (type == "SHUFFLE") currentMediaInfo.Shuffle = Boolean.Parse(info);
-          else if (type == "ERROR") Log(LogType.ERROR, $"WNPRedux: Error from browser extension: {info}");
-          else if (type == "ERRORDEBUG") Log(LogType.DEBUG, $"WNPRedux: Browser Error {info}");
-          else Log(LogType.WARNING, $"Unknown message type: {type}");
+          else if (type == "ERROR") Log(LogType.Error, $"WNPRedux: Error from browser extension: {info}");
+          else if (type == "ERRORDEBUG") Log(LogType.Debug, $"WNPRedux: Browser Error {info}");
+          else Log(LogType.Warning, $"Unknown message type: {type}");
 
           if (type != "POSITION" && currentMediaInfo.Title != "")
             UpdateMediaInfo();
         } catch (Exception e) {
-          Log(LogType.ERROR, "WNPRedux: Error parsing data from WebNowPlaying Redux Browser Extension");
-          Log(LogType.DEBUG, e.ToString());
+          Log(LogType.Error, "WNPRedux: Error parsing data from WebNowPlaying Redux Browser Extension");
+          Log(LogType.Debug, e.ToString());
         }
       }
 
