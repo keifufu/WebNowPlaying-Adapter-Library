@@ -393,7 +393,7 @@ namespace WNPReduxAdapterLibrary {
         // This used to get the version from the final assembly, but who knows what authors might do there.
         // We simply let them provide a version number on Initialization now.
         // Update WNPRLIB_REVISION when we update something that might break communication compatibility.
-        Sessions.Broadcast($"ADAPTER_VERSION {adapterVersion};WNPRLIB_REVISION 1");
+        Sessions.SendTo($"ADAPTER_VERSION {adapterVersion};WNPRLIB_REVISION 1", ID);
 
         mediaInfoDictionary.GetOrAdd(ID, new MediaInfo());
       }
