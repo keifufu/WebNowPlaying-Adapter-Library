@@ -6,6 +6,7 @@ using WebSocketSharp;
 using WebSocketSharp.Server;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace WNPReduxAdapterLibrary {
   public class WNPRedux {
@@ -242,8 +243,10 @@ namespace WNPReduxAdapterLibrary {
         if (positionInSeconds < 0) positionInSeconds = 0;
         if (positionInSeconds > mediaInfo.DurationSeconds) positionInSeconds = mediaInfo.DurationSeconds;
         double positionInPercent = (double)positionInSeconds / mediaInfo.DurationSeconds;
+        // This makes sure it always gives us 0.0, not 0,0 (dot instead of comma, regardless of localization)
+        string positionInPercentString = positionInPercent.ToString(CultureInfo.InvariantCulture);
 
-        SendMessage($"{Events.SET_POSITION} {positionInSeconds}:{positionInPercent}");
+        SendMessage($"{Events.SET_POSITION} {positionInSeconds}:{positionInPercentString}");
       }
       /// <summary>
       /// Reverts the current medias playback progress by x seconds
