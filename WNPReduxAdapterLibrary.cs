@@ -242,7 +242,7 @@ namespace WNPReduxAdapterLibrary {
         int positionInSeconds = seconds;
         if (positionInSeconds < 0) positionInSeconds = 0;
         if (positionInSeconds > mediaInfo.DurationSeconds) positionInSeconds = mediaInfo.DurationSeconds;
-        double positionInPercent = (double)positionInSeconds / mediaInfo.DurationSeconds;
+        double positionInPercent = (double)positionInSeconds / mediaInfo.DurationSeconds; // Doesn't cry about dividing by zero as it's a double
         // This makes sure it always gives us 0.0, not 0,0 (dot instead of comma, regardless of localization)
         string positionInPercentString = positionInPercent.ToString(CultureInfo.InvariantCulture);
 
@@ -267,7 +267,7 @@ namespace WNPReduxAdapterLibrary {
       /// </summary>
       /// <param name="percent"></param>
       public void SetPositionPercent(double percent) {
-        int seconds = (int)Math.Round(percent / 100 * mediaInfo.DurationSeconds);
+        int seconds = (int)Math.Round((percent / 100) * mediaInfo.DurationSeconds);
         SetPositionSeconds(seconds);
       }
       /// <summary>
@@ -275,7 +275,7 @@ namespace WNPReduxAdapterLibrary {
       /// </summary>
       /// <param name="percent"></param>.
       public void RevertPositionPercent(double percent) {
-        int seconds = (int)Math.Round(percent / 100 * mediaInfo.DurationSeconds);
+        int seconds = (int)Math.Round((percent / 100) * mediaInfo.DurationSeconds);
         SetPositionSeconds(mediaInfo.PositionSeconds - seconds);
       }
       /// <summary>
@@ -283,7 +283,7 @@ namespace WNPReduxAdapterLibrary {
       /// </summary>
       /// <param name="percent"></param>.
       public void ForwardPositionPercent(double percent) {
-        int seconds = (int)Math.Round(percent / 100 * mediaInfo.DurationSeconds);
+        int seconds = (int)Math.Round((percent / 100) * mediaInfo.DurationSeconds);
         SetPositionSeconds(mediaInfo.PositionSeconds + seconds);
       }
       /// <summary>
