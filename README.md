@@ -33,25 +33,27 @@ void Main() {
 }
 ```
 
-### WNPRedux.Initialize()
-`WNPRedux.Initialize(int port, string version, Action<LogType, string> logger, bool throttleLogs = false)`  
+### `WNPRedux.Initialize()`
+`WNPRedux.Initialize(int port, string version, Action<LogType, string> logger, bool throttleLogs = false, string listenAddress = "127.0.0.1")`  
 Opens the WebSocket if it isn't already opened.  
 `port` should _not_ be used by other adapters already, or interfere with any other programs.  
 `version` has to be "x.x.x".  
 `throttleLogs` prevents the same log message being logged more than once per 30 seconds.
 
-### WNPRedux.Log(WNPRedux.LogType type, string message)
+### `WNPRedux.isInitialized`
+Whether WNPRedux is initialized or not.
+
+### `WNPRedux.Log(WNPRedux.LogType type, string message)`
 Calls the `logger` provided in `WNPRedux.Initialize()`  
 Useful since it's throttled to one similar message per 30 seconds if `throttleLogs` is set to `true` in `WNPRedux.Initialize()`
 
-### WNPRedux.Close()
+### `WNPRedux.Close()`
 Closes the WebSocket if it's opened.
 
-### WNPRedux.clients
+### `WNPRedux.clients`
 Number of clients currently connected.  
-Each client is normally a tab providing media information.
 
-### WNPRedux.mediaInfo
+### `WNPRedux.mediaInfo`
 Information about the currently active media.
 Name | Default | Description
 --- | --- | ---
@@ -71,7 +73,7 @@ Name | Default | Description
 `RepeatState` | NONE | Current repeat state (NONE, ONE, ALL)
 `Shuffle` | false | If shuffle is enabled
 
-### WNPRedux.mediaEvents
+### `WNPRedux.mediaEvents`
 Events to interact with the currently active media.  
 This isn't guaranteed to always work, since e.g. Spotify has no "dislike" button,  
 skip buttons might be disabled in certain scenarios, etc.
