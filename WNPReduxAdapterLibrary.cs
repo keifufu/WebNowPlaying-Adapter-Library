@@ -88,6 +88,7 @@ namespace WNPReduxAdapterLibrary {
     /// </summary>
     public static void Close() {
       if (!_isInitialized) return;
+      _isInitialized = false;
       if (ws != null) {
         ws.Stop();
         ws = null;
