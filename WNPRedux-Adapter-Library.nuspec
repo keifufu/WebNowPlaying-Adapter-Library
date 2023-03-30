@@ -10,7 +10,7 @@
     <icon>icon.png</icon>
     <projectUrl>https://github.com/keifufu/WNPRedux-Adapter-Library</projectUrl>
     <description>$description$</description>
-    <releaseNotes>Added public Log function, which is useful since it can be throttled.</releaseNotes>
+    <releaseNotes>Improved log messages.</releaseNotes>
     <copyright>$copyright$</copyright>
     <tags>webnowplaying-redux keifufu</tags>
   </metadata>
