@@ -1,15 +1,22 @@
 ﻿#pragma warning disable 1591
+#pragma warning disable IDE1006
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System;
-using WebSocketSharp;
-using WebSocketSharp.Server;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Globalization;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using System;
+using WebSocketSharp.Server;
+using WebSocketSharp;
 
 namespace WNPReduxAdapterLibrary {
   public class WNPRedux {
+    private static bool _isInitialized = false;
+    /// <summary>
+    /// Whether WNPRedux is initialized or not
+    /// </summary>
+    public static bool isInitialized { get { return _isInitialized; } }
     /// <summary>
     /// Info about the currently playing media.
     /// </summary>
@@ -50,20 +57,23 @@ namespace WNPReduxAdapterLibrary {
     /// <param name="version">Adapter Version (major.minor.patch)</param>
     /// <param name="logger">Custom logger</param>
     /// <param name="throttleLogs">Prevent the same log message being logged more than once per 30 seconds</param>
-    public static void Initialize(int port, string version, Action<LogType, string> logger, bool throttleLogs = false) {
+    /// <param name="listenAddress">Address to listen on. Default is 127.0.0.1</param>
+    public static void Initialize(int port, string version, Action<LogType, string> logger, bool throttleLogs = false, string listenAddress = "127.0.0.1") {
       try {
-        if (ws != null) return;
+        if (_isInitialized) return;
+        _isInitialized = true;
         adapterVersion = version;
         _logger = logger;
         _throttleLogs = throttleLogs;
         mediaInfo = new MediaInfo();
         mediaEvents = new MediaEvents();
-        ws = new WebSocketServer(port);
+        ws = new WebSocketServer(IPAddress.Parse(listenAddress), port);
         ws.AddWebSocketService<WNPReduxWebSocket>("/");
         ws.Start();
       } catch (Exception e) {
-        Log(LogType.Error, "WNPRedux: Failed to start websocket");
-        Log(LogType.Debug, $"WNPRedux Trace: {e}");
+        _isInitialized = false;
+        Log(LogType.Error, "WNPRedux - Failed to start websocket");
+        Log(LogType.Debug, $"WNPRedux - Error Trace: {e}");
       }
     }
 
@@ -77,6 +87,7 @@ namespace WNPReduxAdapterLibrary {
     /// Closes the WebSocket if it's opened.
     /// </summary>
     public static void Close() {
+      if (!_isInitialized) return;
       if (ws != null) {
         ws.Stop();
         ws = null;
@@ -122,7 +133,7 @@ namespace WNPReduxAdapterLibrary {
 
         foreach (KeyValuePair<string, MediaInfo> item in iterableDictionary) {
           // No need to check title since timestamp is only set when title is set
-          if (item.Value.State == MediaInfo.StateMode.PLAYING && item.Value.Volume >= 1) {
+          if (item.Value.State == MediaInfo.StateMode.PLAYING && item.Value.Volume > 0) {
             mediaInfo = item.Value;
             suitableMatch = true;
             // If match found break early which should be always very early
@@ -136,8 +147,8 @@ namespace WNPReduxAdapterLibrary {
           mediaInfo = fallbackInfo;
         }
       } catch (Exception e) {
-        Log(LogType.Error, "WNPRedux: Error finding new media info to display");
-        Log(LogType.Debug, $"WNPRedux Trace: {e}");
+        Log(LogType.Error, "WNPRedux - Error finding new media info to display");
+        Log(LogType.Debug, $"WNPRedux - Error Trace: {e}");
       }
     }
 
@@ -181,11 +192,8 @@ namespace WNPReduxAdapterLibrary {
         get { return _Title; }
         set {
           _Title = value;
-          if (value != "") {
-            Timestamp = DateTime.Now.Ticks / (decimal)TimeSpan.TicksPerMillisecond;
-          } else {
-            Timestamp = 0;
-          }
+          if (value.Length > 0) Timestamp = DateTime.Now.Ticks / (decimal)TimeSpan.TicksPerMillisecond;
+          else Timestamp = 0;
         }
       }
       public string Artist { get; set; }
@@ -200,7 +208,9 @@ namespace WNPReduxAdapterLibrary {
         get { return _Volume; }
         set {
           _Volume = value;
-          Timestamp = DateTime.Now.Ticks / (decimal)TimeSpan.TicksPerMillisecond;
+          if (State == StateMode.PLAYING) {
+            Timestamp = DateTime.Now.Ticks / (decimal)TimeSpan.TicksPerMillisecond;
+          }
         }
       }
       public int Rating { get; set; }
@@ -325,14 +335,18 @@ namespace WNPReduxAdapterLibrary {
 
     private class WNPReduxWebSocket : WebSocketBehavior {
       private int ConvertTimeStringToSeconds(string time) {
-        string[] durArr = time.Split(':');
+        try {
+          string[] durArr = time.Split(':');
 
-        // Duration will always have seconds and minutes, but hours are optional
-        int durSec = Convert.ToInt16(durArr[durArr.Length - 1]);
-        int durMin = durArr.Length > 1 ? Convert.ToInt16(durArr[durArr.Length - 2]) * 60 : 0;
-        int durHour = durArr.Length > 2 ? Convert.ToInt16(durArr[durArr.Length - 3]) * 60 * 60 : 0;
+          // Duration will always have seconds and minutes, but hours are optional
+          int durSec = Convert.ToInt16(durArr[durArr.Length - 1]);
+          int durMin = durArr.Length > 1 ? Convert.ToInt16(durArr[durArr.Length - 2]) * 60 : 0;
+          int durHour = durArr.Length > 2 ? Convert.ToInt16(durArr[durArr.Length - 3]) * 60 * 60 : 0;
 
-        return durHour + durMin + durSec;
+          return durHour + durMin + durSec;
+        } catch {
+          return 0;
+        }
       }
 
       protected override void OnMessage(MessageEventArgs arg) {
@@ -369,35 +383,30 @@ namespace WNPReduxAdapterLibrary {
             currentMediaInfo.PositionSeconds = ConvertTimeStringToSeconds(info);
 
             if (currentMediaInfo.DurationSeconds > 0) {
-              currentMediaInfo.PositionPercent = (double)currentMediaInfo.PositionSeconds / currentMediaInfo.DurationSeconds * 100.0;
+              currentMediaInfo.PositionPercent = (currentMediaInfo.PositionSeconds / currentMediaInfo.DurationSeconds) * 100.0;
             } else {
               currentMediaInfo.PositionPercent = 100;
             }
           } else if (type == "VOLUME") currentMediaInfo.Volume = Convert.ToInt16(info);
           else if (type == "RATING") currentMediaInfo.Rating = Convert.ToInt16(info);
           else if (type == "REPEAT") currentMediaInfo.RepeatState = (MediaInfo.RepeatMode)Enum.Parse(typeof(MediaInfo.RepeatMode), info);
-          else if (type == "SHUFFLE") currentMediaInfo.Shuffle = Boolean.Parse(info);
-          else if (type == "ERROR") Log(LogType.Error, $"WNPRedux: Error from browser extension: {info}");
-          else if (type == "ERRORDEBUG") Log(LogType.Debug, $"WNPRedux: Browser Error {info}");
-          else Log(LogType.Warning, $"Unknown message type: {type}");
+          else if (type == "SHUFFLE") currentMediaInfo.Shuffle = bool.Parse(info);
+          else if (type == "ERROR") Log(LogType.Error, $"WNPRedux - Browser Error: {info}");
+          else if (type == "ERRORDEBUG") Log(LogType.Debug, $"WNPRedux - Browser Error Trace: {info}");
+          else Log(LogType.Warning, $"WNPRedux - Unknown message type: {type}; ({arg.Data})");
 
-          if (type != "POSITION" && currentMediaInfo.Title != "")
+          if (type != "POSITION" && currentMediaInfo.Title.Length > 0)
             UpdateMediaInfo();
         } catch (Exception e) {
-          Log(LogType.Error, "WNPRedux: Error parsing data from WebNowPlaying Redux Browser Extension");
-          Log(LogType.Debug, e.ToString());
+          Log(LogType.Error, "WNPRedux - Error parsing data from WebNowPlaying-Redux");
+          Log(LogType.Debug, $"WNPRedux - Error Trace: {e}");
         }
       }
 
       protected override void OnOpen() {
         base.OnOpen();
         clients++;
-
-        // This used to get the version from the final assembly, but who knows what authors might do there.
-        // We simply let them provide a version number on Initialization now.
-        // Update WNPRLIB_REVISION when we update something that might break communication compatibility.
         Sessions.SendTo($"ADAPTER_VERSION {adapterVersion};WNPRLIB_REVISION 1", ID);
-
         mediaInfoDictionary.GetOrAdd(ID, new MediaInfo());
       }
 
@@ -414,3 +423,4 @@ namespace WNPReduxAdapterLibrary {
 }
 
 #pragma warning restore 1591
+#pragma warning restore IDE1006
