@@ -10,7 +10,7 @@
     <icon>icon.png</icon>
     <projectUrl>https://github.com/keifufu/WNPRedux-Adapter-Library</projectUrl>
     <description>$description$</description>
-    <releaseNotes>Fix `WNPRedux.Close()` not setting `WNPRedux.isInitialized` to false.</releaseNotes>
+    <releaseNotes>Fix `WNPRedux.mediaInfo.PositionPercent` being computed as a int instead of a double.</releaseNotes>
     <copyright>$copyright$</copyright>
     <tags>webnowplaying-redux keifufu</tags>
   </metadata>
