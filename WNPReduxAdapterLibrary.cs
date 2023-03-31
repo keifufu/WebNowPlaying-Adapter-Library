@@ -384,7 +384,7 @@ namespace WNPReduxAdapterLibrary {
             currentMediaInfo.PositionSeconds = ConvertTimeStringToSeconds(info);
 
             if (currentMediaInfo.DurationSeconds > 0) {
-              currentMediaInfo.PositionPercent = (currentMediaInfo.PositionSeconds / currentMediaInfo.DurationSeconds) * 100.0;
+              currentMediaInfo.PositionPercent = ((double)currentMediaInfo.PositionSeconds / currentMediaInfo.DurationSeconds) * 100.0;
             } else {
               currentMediaInfo.PositionPercent = 100;
             }
