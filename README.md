@@ -1,11 +1,15 @@
 # WebNowPlaying-Redux Adapter Library
 A C# library to communicate with the [WebNowPlaying-Redux](https://github.com/keifufu/WebNowPlaying-Redux) extension.  
-Note: This library is for windows only.
+For Windows Media Session support, this contains [WNPRedux-Native-Windows](https://github.com/keifufu/WNPRedux-Native-Windows), which will automatically be run if on Windows 10 or newer.
 
 Refer to [this](https://github.com/keifufu/WebNowPlaying-Redux/blob/main/CreatingAdapters.md) if you want to create or submit your own adapter.
 
 ## Installing
 Available on [NuGet](https://www.nuget.org/packages/WNPRedux-Adapter-Library/) or as a dll in [Releases](https://github.com/keifufu/WNPRedux-Adapter-Library/releases)
+
+## Native APIs
+No built-in support for [Native APIs](https://github.com/keifufu/WebNowPlaying-Redux/blob/main/NativeAPIs.md).  
+However, enough is exposed to make it work, get inspiration from [here](https://github.com/keifufu/WebNowPlaying-Redux-Rainmeter/blob/main/src/WNPReduxAdapterLibraryExtensions/WNPReduxNative.cs)
 
 ## Usage
 ```CS
@@ -19,13 +23,13 @@ void Main() {
     Console.WriteLine($"{type}: {message}");
   }
 
-  // Start WNP, providing a port, version number and a logger
+  // Start WNP, providing a websocket port, version number and a logger
   WNPRedux.Start(1234, "1.0.0", logger);
 
   // Write the current title to the console and pause/unpause the video for 30 seconds
   for (int i = 0; i < 30; i++) {
-    Console.WriteLine(WNPRedux.mediaInfo.Title);
-    WNPRedux.mediaEvents.TryTogglePlayPause();
+    Console.WriteLine(WNPRedux.MediaInfo.Title);
+    WNPRedux.MediaInfo.Controls.TryTogglePlayPause();
     Thread.Sleep(1000);
   }
 
@@ -64,8 +68,8 @@ Useful since it's throttled to one similar message per 30 seconds if `throttleLo
 
 ---
 
-### `WNPRedux.Close()`
-Closes the WebSocket if it's opened.
+### `WNPRedux.Stop()`
+Stops WNP if it's started.
 
 ---
 
@@ -74,7 +78,7 @@ Number of clients currently connected.
 
 ---
 
-### `WNPRedux.mediaInfo`
+### `WNPRedux.MediaInfo`
 Information about the currently active media.
 Name | Default | Description
 --- | --- | ---

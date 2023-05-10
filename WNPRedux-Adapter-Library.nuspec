@@ -10,7 +10,7 @@
     <icon>icon.png</icon>
     <projectUrl>https://github.com/keifufu/WNPRedux-Adapter-Library</projectUrl>
     <description>$description$</description>
-    <releaseNotes>Add compatibility for WNPRedux-Native-Windows and clean up API.</releaseNotes>
+    <releaseNotes>Read changelog on GitHub</releaseNotes>
     <copyright>$copyright$</copyright>
     <tags>webnowplaying-redux keifufu</tags>
   </metadata>
