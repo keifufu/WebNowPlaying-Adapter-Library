@@ -5,4 +5,4 @@
 [assembly: AssemblyCompany("keifufu")]
 [assembly: AssemblyProduct("WNPRedux-Adapter-Library")]
 [assembly: AssemblyCopyright("© 2023 - keifufu")]
-[assembly: AssemblyVersion("2.0.0")]
+[assembly: AssemblyVersion("2.0.1")]
