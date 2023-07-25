@@ -1,6 +1,5 @@
 # WebNowPlaying-Redux Adapter Library
 A C# library to communicate with the [WebNowPlaying-Redux](https://github.com/keifufu/WebNowPlaying-Redux) extension.  
-For Windows Media Session support, this contains [WNPRedux-Native-Windows](https://github.com/keifufu/WNPRedux-Native-Windows), which will automatically be run if on Windows 10 or newer.
 
 Refer to [this](https://github.com/keifufu/WebNowPlaying-Redux/blob/main/CreatingAdapters.md) if you want to create or submit your own adapter.
 
