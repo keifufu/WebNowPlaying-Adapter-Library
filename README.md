@@ -101,7 +101,7 @@ Name | Default | Description
 ---
 
 ### `MediaControls`
-Used in `WNPRedux.media_info.controls`
+Used in `WNPRedux.MediaInfo.controls`
 Name  | Description
 --- | ---
 `supportsPlayPause` | If the current player supports play_pause
